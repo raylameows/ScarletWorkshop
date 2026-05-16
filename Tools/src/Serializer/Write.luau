@@ -119,7 +119,7 @@ function Write.Vector2(vector: Vector2)
 end
 
 function Write.InstanceReference(object: Instance?)
-	if not object then return end
+	if not object or not object:IsDescendantOf(RootObject) then return end
 	
 	local path = {}
 	local current = object

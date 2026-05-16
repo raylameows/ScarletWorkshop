@@ -5,6 +5,7 @@ local HttpService = game:GetService("HttpService")
 local Shared = require(`./Shared`)
 local Instances = require(`./Instances`)
 local Traverse = require(`../Util/Traverse`)
+local SafeCall = require(`../Util/SafeCall`)
 
 local Read = {}
 local RootNode: Shared.Node?
@@ -179,6 +180,10 @@ function Read.Instance(node: Shared.Node, direct: boolean)
 end
 
 function Read.Map(code: string)
+	if string.sub(code, 1, 8) == `https://` then
+		code = HttpService:GetAsync(code)
+	end
+	
 	local compressedNodeTree = buffer.fromstring(code)
 	local nodeTreeBuffer = EncodingService:DecompressBuffer(
 		EncodingService:Base64Decode(compressedNodeTree), Enum.CompressionAlgorithm.Zstd
