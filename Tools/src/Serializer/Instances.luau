@@ -215,6 +215,11 @@ return {
 		{"Name", "string", "NumberValue"},
 		{"Value", "number", 0},
 	},
+	
+	BlurEffect = {
+		{"Name", "string", "Blur"},
+		{"Size", "number", 24}
+	},
 
 	BloomEffect = {
 		{"Name", "string", "Bloom"},
@@ -248,6 +253,20 @@ return {
 		{"Enabled", "boolean", true},
 		{"Intensity", "number", 0.25},
 		{"Spread", "number", 1}
+	},
+
+	ColorCorrectionEffect = {
+		{"Name", "string", "ColorCorrection"},
+		{"Brightness", "number", 0},
+		{"Contrast", "number", 0},
+		{"Enabled", "boolean", false},
+		{"Saturation", "number", 0},
+		{"TintColor", "Color3", Color3.new(1, 1, 1)}
+	},
+	
+	ColorGradingEffect = {
+		{"Name", "string", "ColorGrading"},
+		{"TonemapperPreset", "EnumItem", Enum.TonemapperPreset.Default}
 	},
 
 	Attachment = {
@@ -334,7 +353,7 @@ return {
 		{"Part0", "InstanceReference", nil},
 		{"Part1", "InstanceReference", nil},
 		{"Enabled", "boolean", true},
-		{"Name", "string", "Weld"}
+		{"Name", "string", "WeldConstraint"}
 	},
 
 	Humanoid = {
