@@ -1,4 +1,5 @@
 local CoreGui = game:GetService("CoreGui")
+local Selection = game:GetService("Selection")
 
 local Create = require(`../Util/UI/Create`)
 local Frame = require(`../Util/UI/Frame`)
@@ -15,7 +16,7 @@ MapSelector.Description = `Searches through all available maps in the place and 
 MapSelector.Icon = 117093940689396 :: number
 
 local Maps = Traverse(`ServerStorage.Maps`)
-if Maps:FindFirstChild(`PvP`) then Maps = Maps.PvP end
+if Maps:FindFirstChild(`PvP`) then Maps = Maps.PvP :: Instance end
 
 function MapSelector:Show()
 	if not self.Selected then return end
@@ -75,6 +76,40 @@ function MapSelector:Add(map: Instance)
 	}
 end
 
+function MapSelector:ToggleAddButton(visible: boolean)
+	if self.AddButton.Visible ~= visible then
+		self.AddButton.Visible = visible
+	end
+end
+
+function MapSelector:UpdateAddButton()
+	local selected = Selection:Get()
+	if #selected > 1 or #selected == 0 or (selected[1] and (self.Selected == selected[1] or selected[1].Parent == Maps) or not selected[1]:IsA(`Folder`)) then 
+		self:ToggleAddButton(false)
+	else
+		self:ToggleAddButton(true)
+	end
+end
+
+function MapSelector:List()
+	for _, button in (self.MapList:QueryDescendants(`>TextButton`)) do
+		button:Destroy()
+	end
+	
+	local maps = Maps:GetChildren()
+	if #maps == 0 and not self.Selected then
+		for _, possibleMap in (workspace:QueryDescendants(`>Folder`)) do
+			self:Add(possibleMap)
+		end
+	else
+		for _, map in (maps) do
+			self:Add(map)
+		end
+		self:Add(self.Selected)
+	end
+	self:Refresh()
+end
+
 function MapSelector:Activate()
 	self.Selected = Current:Get()
 	self.MapList = Create "ScrollingFrame" {
@@ -93,12 +128,31 @@ function MapSelector:Activate()
 			}
 		}
 	}
+	self.AddButton = Button {
+		Text = `Add`,
+
+		Size = UDim2.fromOffset(200, 30),
+		Position = UDim2.fromOffset(270, 50),
+
+		Activated = function()
+			local map = Selection:Get()[1]
+			Selection:Set({})
+			map.Parent = Maps
+		end,
+	}
 	
-	for index, map in (Maps:GetChildren()) do
-		self:Add(map)
-	end
-	self:Add(self.Selected)
-	self:Refresh()
+	self.SelectionEvent = Selection.SelectionChanged:Connect(function()
+		self:UpdateAddButton()
+	end)
+	self:UpdateAddButton()
+	self:List()
+
+	self.AddedEvent = Maps.ChildAdded:Connect(function()
+		self:List()
+	end)
+	self.RemovedEvent = Maps.ChildRemoved:Connect(function()
+		self:List()
+	end)
 	
 	self.UI = Create "ScreenGui" {
 		IgnoreGuiInset = true,
@@ -119,7 +173,8 @@ function MapSelector:Activate()
 					},
 					self.MapList,
 				}
-			}
+			},
+			self.AddButton
 		}
 	}
 end
@@ -128,6 +183,21 @@ function MapSelector:Deactivate()
 	if self.UI then
 		self.UI:Destroy()
 		self.UI = nil
+	end
+
+	if self.SelectionEvent then
+		self.SelectionEvent:Disconnect()
+		self.SelectionEvent = nil
+	end
+
+	if self.AddedEvent then
+		self.AddedEvent:Disconnect()
+		self.AddedEvent = nil
+	end
+
+	if self.RemovedEvent then
+		self.RemovedEvent:Disconnect()
+		self.RemovedEvent = nil
 	end
 end
 
