@@ -228,10 +228,11 @@ return {
 		{"Name", "string", "Atmosphere"},
 		{"Density", "number", 0.395},
 		{"Offset", "number", 0},
-		{"Color", "Color3", Color3.new(199, 170, 107)},
-		{"Decay", "Color3", Color3.new(92, 60, 13)},
+		{"Color", "Color3", Color3.fromRGB(199, 170, 107)},
+		{"Decay", "Color3", Color3.fromRGB(92, 60, 13)},
 		{"Glare", "number", 0},
 		{"Haze", "number", 0},
+	},
 
 	DepthOfFieldEffect = {
 		{"Name", "string", "DepthOfField"},
