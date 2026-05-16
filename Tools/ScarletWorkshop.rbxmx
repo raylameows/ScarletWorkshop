@@ -1,0 +1,1962 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
+	<External>null</External>
+	<External>nil</External>
+	<Item class="Folder" referent="RBXD97E8EE8A0374EF1AFE3BA1848E7BB4F">
+		<Properties>
+			<BinaryString name="AttributesSerialize"></BinaryString>
+			<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+			<bool name="DefinesCapabilities">false</bool>
+			<string name="Name">ScarletWorkshop</string>
+			<int64 name="SourceAssetId">-1</int64>
+			<BinaryString name="Tags"></BinaryString>
+		</Properties>
+		<Item class="Folder" referent="RBX041B15890E9B4946BA92903DCDF0E100">
+			<Properties>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">LightingPort</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+			<Item class="ModuleScript" referent="RBX2C4E40CFC3CF4509A3859A70CEAF2227">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<ProtectedString name="Source"><![CDATA[local CoreGui = game:GetService("CoreGui")
+local Lighting = game:GetService("Lighting")
+
+local Create = require(`../Util/UI/Create`)
+local Frame = require(`../Util/UI/Frame`)
+local Label = require(`../Util/UI/Label`)
+local Button = require(`../Util/UI/Button`)
+local Seperator = require(`../Util/UI/Seperator`)
+
+local Current = require(`../Util/Current`)
+local Instances = require(`../Serializer/Instances`)
+local TypeToValueBase = require(`../Util/TypeToValueBase`)
+
+local LightingPort = {}
+LightingPort.Name = `Lighting Port` :: string
+LightingPort.Description = `Allows you to easily preview props in studio` :: string
+LightingPort.Icon = 96681177725941 :: number
+
+local function IsLightingEffect(object: Instance)
+	return object:IsA(`PostEffect`) or object:IsA(`Atmosphere`) or object:IsA(`Sky`)
+end
+
+function LightingPort:Export()
+	local current = Current:Get()
+	if not current then return end
+	
+	local previous = current:FindFirstChild(`Lighting`)
+	if previous then previous:Destroy() end
+	
+	local lightingFolder = Instance.new(`Folder`)
+	lightingFolder.Name = `Lighting`
+
+	local properties = Instance.new(`Folder`)
+	properties.Name = `Properties`
+	properties.Parent = lightingFolder
+
+	local effects = Instance.new(`Folder`)
+	effects.Name = `Effects`
+	effects.Parent = lightingFolder
+	
+	for _, propertyData in (Instances.Lighting) do
+		local property, propertyType, default = unpack(propertyData)
+		local class = TypeToValueBase(propertyType)
+		if not class then
+			warn(`Can't convert {property}'s type {propertyType} to value base`)
+			continue
+		end
+		
+		local object: ValueBase = Instance.new(class)
+		object.Value = Lighting[property]
+		object.Name = property
+		object.Parent = properties
+	end
+	
+	for _, effect in (Lighting:GetChildren()) do
+		if not IsLightingEffect(effect) then continue end 
+		
+		local copy = effect:Clone()
+		copy.Parent = effects
+	end
+	
+	lightingFolder.Parent = current
+end
+
+function LightingPort:Import()
+	local current = Current:Get()
+	if not current then return end
+	
+	local lightingFolder = current:FindFirstChild(`Lighting`)
+	if not lightingFolder then return end
+	
+	for _, effect in (Lighting:GetChildren()) do
+		if not IsLightingEffect(effect) then continue end
+		effect:Destroy()
+	end
+	
+	for _, lightingPropertyObject in (lightingFolder.Properties:GetChildren()) do
+		local property, value = lightingPropertyObject.Name, lightingPropertyObject.Value
+		Lighting[property] = value
+	end
+	
+	if lightingFolder:FindFirstChild(`Effects`) then
+		for _, effect in (lightingFolder.Effects:GetChildren()) do
+			local copy = effect:Clone()
+			copy.Parent = Lighting
+		end
+	else
+		for _, effect in (lightingFolder:GetChildren()) do
+			if not IsLightingEffect(effect) then continue end
+			
+			local copy = effect:Clone()
+			copy.Parent = Lighting
+		end
+	end
+end
+
+function LightingPort:Clear()
+	for _, effect in (Lighting:GetChildren()) do
+		if not IsLightingEffect(effect) then continue end
+		effect:Destroy()
+	end
+	
+	local defaultsFolder = Lighting:FindFirstChild(`EditingLighting`)
+	for _, propertyData in (Instances.Lighting) do
+		local property, propertyType, default = unpack(propertyData)
+		local set = defaultsFolder and defaultsFolder.Properties:FindFirstChild(property) and defaultsFolder.Properties[property].Value or default
+		Lighting[property] = set
+	end
+	
+	if defaultsFolder then
+		for _, effect in (defaultsFolder.Effects:GetChildren()) do
+			local copy = effect:Clone()
+			copy.Parent = Lighting
+		end
+	end
+end
+
+function LightingPort:Activate()
+	self.UI = Create "ScreenGui" {
+		IgnoreGuiInset = true,
+
+		Parent = CoreGui,
+		Children = {
+			Button {
+				Text = `Export`,
+				Size = UDim2.fromOffset(200, 30),
+				Position = UDim2.fromOffset(50, 50),
+
+				Activated = function()
+					self:Export()
+				end,
+			},
+			Button {
+				Text = `Import`,
+				Size = UDim2.fromOffset(200, 30),
+				Position = UDim2.fromOffset(270, 50),
+
+				Activated = function()
+					self:Import()
+				end,
+			},
+			Button {
+				Text = `Clear`,
+				Size = UDim2.fromOffset(200, 30),
+				Position = UDim2.fromOffset(490, 50),
+
+				Activated = function()
+					self:Clear()
+				end,
+			},
+		}
+	}
+end
+
+function LightingPort:Deactivate()
+	if self.UI then
+		self.UI:Destroy()
+		self.UI = nil
+	end
+end
+
+return LightingPort]]></ProtectedString>
+					<string name="ScriptGuid">{26c983c0-23be-5187-0a0d-800caf9273a2}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Init</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+		</Item>
+		<Item class="Script" referent="RBXE7172B2CEA59486F82C1E9111ECE68CA">
+			<Properties>
+				<ProtectedString name="Source"><![CDATA[local PluginDebugService = game:GetService("PluginDebugService")
+local RunService = game:GetService("RunService")
+local Selection = game:GetService("Selection")
+local UserInputService = game:GetService("UserInputService")
+if not RunService:IsStudio() then return end
+
+local FeatureCheck = require(`./Util/FeatureCheck`)
+
+local Toolbar: PluginToolbar = plugin:CreateToolbar(`ScarletUtilityTools`)
+local Plugins: {Folder} = {} do
+	for _,folder in (script.Parent:GetChildren()) do
+		if folder:IsA(`Folder`) and folder:FindFirstChild(`Init`) then
+			table.insert(Plugins, folder)
+		end
+	end
+end
+
+local Current: {}? = nil
+for _, tool in (Plugins) do
+	local module = require(tool.Init)
+	if not module.Name then continue end
+	module.Plugin = plugin
+	
+	local button = Toolbar:CreateButton(module.Name, module.Description or module.Name, `rbxassetid://{module.Icon}`)
+	button.Click:Connect(function()
+		if Current then
+			local currentIsSame = Current == module
+			Deactivation()
+			
+			if currentIsSame then 
+				plugin:Deactivate()
+				return
+			end
+		end
+		
+		plugin:Activate(true)
+		module:Activate()
+		Current = module
+	end)
+end
+
+-- Searching for the plugin inside PluginDebugService is very painful especially because of the icons and the user_ prefix
+local quickSelect: RBXScriptConnection?
+if FeatureCheck(`Debug`) then
+	quickSelect = UserInputService.InputBegan:Connect(function(input: InputObject, gpe: boolean)
+		if gpe then return end
+		
+		if input.KeyCode == Enum.KeyCode.F then
+			local object = PluginDebugService:FindFirstChild(`user_ScarletUtilityTools.rbxmx`)
+			Selection:Set({object})
+		end
+	end)
+end
+
+function Deactivation()
+	if Current then
+		Current:Deactivate()
+		Current = nil
+	end
+end
+
+function Unloading()
+	if quickSelect then
+		quickSelect:Disconnect()
+		quickSelect = nil
+	end
+	Deactivation()
+end
+
+plugin.Deactivation:Connect(Deactivation)
+plugin.Unloading:Connect(Unloading)]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">3</token>
+				<string name="ScriptGuid">{eb9a41bf-b98d-efd4-d2d1-88cbda0df072}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">Main</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+		</Item>
+		<Item class="Folder" referent="RBX053C84EE874D4F22AF0F7C25F9CD8C81">
+			<Properties>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">Util</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+			<Item class="Folder" referent="RBXD7EFE21B486A4473910AEBF3C7223AA9">
+				<Properties>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">UI</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+				<Item class="ModuleScript" referent="RBX5AE905CB14C241FB8FF4DAB50C8F3C77">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<ProtectedString name="Source"><![CDATA[export type Class = string
+export type Properties = {[string]: any}
+export type Call = (class: Class) -> ((properties: Properties) -> Instance)
+export type Wrapped<Defaults> = (properties: {[Defaults]: any}) -> Instance
+
+local Create
+Create = function(class: Class)
+	return function(properties: Properties)
+		local object: Instance = Instance.new(class)
+		local parent: Instance?
+		
+		for k, v in (properties) do
+			if k == `Parent` then
+				parent = v
+			elseif k == `Children` then
+				for _, child in (v) do
+					if typeof(child) == `table` then
+						Create (child[1]) (child[2]).Parent = object
+					else
+						child.Parent = object
+					end
+				end
+			else
+				if typeof(v) == `function` then
+					object[k]:Connect(v)
+				else
+					object[k] = v
+				end
+			end
+		end
+		
+		if parent then
+			object.Parent = parent
+		end
+		
+		return object
+	end
+end
+
+return Create]]></ProtectedString>
+						<string name="ScriptGuid">{12227f81-b2e4-f2e7-0872-406ed1f4f3e5}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">Create</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags"></BinaryString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBXC0EBAE2C6F0B4145BE774835FF091091">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<ProtectedString name="Source"><![CDATA[local Create = require(`./Create`)
+local Wrapper = require(`./Wrapper`)
+local Pseudo = require(`./Pseudo`)
+
+local Defaults = {
+	BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+	BackgroundTransparency = 0.5,
+	BorderSizePixel = 0,
+	
+	Children = {
+		UICorner = Pseudo "UICorner" {
+			CornerRadius = UDim.new(0, 7)
+		}
+	}
+}
+
+return Wrapper "Frame" (Defaults) :: Create.Wrapped<keyof<typeof(Defaults)>>]]></ProtectedString>
+						<string name="ScriptGuid">{9a64facc-6728-e545-e604-844eb97c3f2c}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">Frame</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags"></BinaryString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX96D309D1BA6743E4A3BDB1435C9D3D6B">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<ProtectedString name="Source"><![CDATA[local Create = require(`./Create`)
+
+return function(class: Create.Class)
+	return function(defaults: Create.Properties)
+		return function(properties: Create.Properties)
+			for k, v in (defaults) do
+				if properties[k] then 
+					if k == `Children` then
+						for _, child in (v) do
+							table.insert(properties.Children, child)
+						end
+					end
+					
+					continue 
+				end
+				properties[k] = v
+			end
+			
+			return Create (class) (properties)
+		end
+	end
+end]]></ProtectedString>
+						<string name="ScriptGuid">{c32df587-2f12-96b1-ea08-fa85fb25ab80}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">Wrapper</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags"></BinaryString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX8CCD1C796D7145798928F2127A44223F">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<ProtectedString name="Source"><![CDATA[local Create = require(`./Create`)
+local Wrapper = require(`./Wrapper`)
+
+return Wrapper "TextLabel" {
+	Font = Enum.Font.FredokaOne,
+	BackgroundTransparency = 1,
+	TextScaled = true,
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+}]]></ProtectedString>
+						<string name="ScriptGuid">{b0508710-9b35-f94d-2e8e-398a9504eb52}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">Label</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags"></BinaryString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX2360BAD324354A39BC4A572F11B6B320">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<ProtectedString name="Source"><![CDATA[local Create = require(`./Create`)
+local Wrapper = require(`./Wrapper`)
+local Pseudo = require(`./Pseudo`)
+
+local Defaults = {
+	Font = Enum.Font.FredokaOne,
+	BackgroundTransparency = 0.5,
+	TextScaled = true,
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+	BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+
+	Children = {
+		UICorner = Pseudo "UICorner" {
+			CornerRadius = UDim.new(0, 7)
+		}
+	}
+}
+
+return Wrapper "TextButton" (Defaults) :: Create.Wrapped<keyof<typeof(Defaults)>>]]></ProtectedString>
+						<string name="ScriptGuid">{37a8ea99-6021-f65a-fa82-d845385ee970}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">Button</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags"></BinaryString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX336D766DCB7C4BBC8EB1CA1E3787BE5B">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<ProtectedString name="Source"><![CDATA[local Create = require(`./Create`)
+
+return function(class: Create.Class)
+	return function(properties: Create.Properties)
+		return {class, properties}
+	end
+end]]></ProtectedString>
+						<string name="ScriptGuid">{fb330236-cfc3-d640-67ae-62a0e1b1ace5}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">Pseudo</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags"></BinaryString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBXB51F0DFA75E64F15B7EECB019CB13DE9">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<ProtectedString name="Source"><![CDATA[local Create = require(`./Create`)
+local Wrapper = require(`./Wrapper`)
+local Pseudo = require(`./Pseudo`)
+
+local Defaults = {
+	PlaceholderText = `Placeholder`,
+	Text = ``,
+	
+	Font = Enum.Font.FredokaOne,
+	BackgroundTransparency = 0.5,
+	TextScaled = true,
+	TextColor3 = Color3.fromRGB(255, 255, 255),
+	BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+	PlaceholderColor3 = Color3.fromRGB(150, 150, 150),
+
+	Children = {
+		UICorner = Pseudo "UICorner" {
+			CornerRadius = UDim.new(0, 7)
+		}
+	}
+}
+
+return Wrapper "TextBox" (Defaults) :: Create.Wrapped<keyof<typeof(Defaults)>>]]></ProtectedString>
+						<string name="ScriptGuid">{62faf550-b93c-c8dc-5c6d-234b6385f160}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">TextBox</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags"></BinaryString>
+					</Properties>
+				</Item>
+				<Item class="ModuleScript" referent="RBX59DE88B50F7B4CC7A78FDA16259A19E7">
+					<Properties>
+						<Content name="LinkedSource"><null></null></Content>
+						<ProtectedString name="Source"><![CDATA[local Create = require(`./Create`)
+local Wrapper = require(`./Wrapper`)
+local Pseudo = require(`./Pseudo`)
+
+local Defaults = {
+	BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+	BackgroundTransparency = 0,
+	Size = UDim2.new(1, 0, 0, 2),
+	BorderSizePixel = 0
+}
+
+return Wrapper "Frame" (Defaults) :: Create.Wrapped<keyof<typeof(Defaults)>>]]></ProtectedString>
+						<string name="ScriptGuid">{f8ceec04-7e25-acd6-5a33-01562f462a78}</string>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">Seperator</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags"></BinaryString>
+					</Properties>
+				</Item>
+			</Item>
+			<Item class="ModuleScript" referent="RBXEBE7CE9083334C77A8E0588D71607C7B">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<ProtectedString name="Source"><![CDATA[return function(feature: string)
+	return workspace:GetAttribute(feature)
+end]]></ProtectedString>
+					<string name="ScriptGuid">{e59c9ca5-a171-6801-5802-1e531f0ef104}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">FeatureCheck</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBXB144AE60109D4C3FB07C2C2D5D413DA9">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<ProtectedString name="Source"><![CDATA[return function(path: string): Instance
+	local iterate = string.split(path, `.`)
+	local current = game
+	for index, traverse in (iterate) do
+		local found = current:FindFirstChild(traverse)
+		if not found then
+			found = Instance.new(`Folder`)
+			found.Name = traverse
+			found.Parent = current
+		end
+		
+		current = found
+	end
+	
+	return current
+end]]></ProtectedString>
+					<string name="ScriptGuid">{b18bd0bb-f865-a175-1c15-250d909ece7a}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Traverse</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBXB579B02E65094D6EA3DA124F70990FCA">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<ProtectedString name="Source"><![CDATA[local Visualize
+
+local PriorityOrder = {
+	Class = 1,
+	Config = 2,
+	Properties = 3,
+	Attributes = 4,
+	Children = 6,
+}
+local ValueHandlers = {
+	[`table`] = function(value, indent, indentStr, nextIndentStr)
+		if next(value) == nil then
+			return "{}"
+		end
+
+		local result = "{\n"
+		local keys = {}
+		for k in (value) do
+			table.insert(keys, k)
+		end
+
+		table.sort(keys, function(a, b)
+			local aPriority = PriorityOrder[a]
+			local bPriority = PriorityOrder[b]
+			if aPriority and bPriority then
+				return aPriority < bPriority
+			end
+			if aPriority then return true end
+			if bPriority then return false end
+			return tostring(a) < tostring(b)
+		end)
+
+		for _, k in ipairs(keys) do
+			local v = value[k]
+
+			local key
+			if typeof(k) == "string" and k:match("^%a[%w_]*$") then
+				key = k
+			else
+				key = "[" .. Visualize(k, indent + 1) .. "]"
+			end
+
+			result ..= nextIndentStr .. key .. " = " .. Visualize(v, indent + 1) .. ",\n"
+		end
+
+		result ..= indentStr .. "}"
+		return result
+	end,
+	[`string`] = function(value)
+		if value:find("\n") then
+			return "[[\n" .. value .. "]]"
+		elseif value:find(`"`) then
+			return "[[" .. value .. "]]"
+		else
+			return string.format("%q", value)
+		end
+	end,
+	[`number`] = tostring,
+	[`boolean`] = tostring,
+	[`Vector3`] = function(value)
+		return `Vector3.new({value.X}, {value.Y}, {value.Z})`
+	end,
+	[`Color3`] = function(value)
+		return `Color3.new({value.R}, {value.G}, {value.B})`
+	end,
+	[`CFrame`] = function(value)
+		return `CFrame.new({tostring(value)})`
+	end,
+	[`EnumItem`] = function(value)
+		return tostring(value)
+	end,
+	[`nil`] = function()
+		return "nil"
+	end,
+	[`unknown`] = function(value, _, _, _, valueType)
+		return `nil --[[({valueType}) | ({tostring(value)})]]`
+	end,
+}
+
+Visualize = function(value, indent)
+	indent = indent or 0
+
+	local indentStr = string.rep("\t", indent)
+	local nextIndentStr = string.rep("\t", indent + 1)
+
+	local valueType = typeof(value)
+	local handler = ValueHandlers[valueType]
+	local pass = {value, indent, indentStr, nextIndentStr, valueType}
+
+	if handler then
+		return handler(unpack(pass))
+	else
+		return ValueHandlers.unknown(unpack(pass))
+	end
+end
+
+return Visualize]]></ProtectedString>
+					<string name="ScriptGuid">{1168c60e-8578-19e6-d343-fc3d383b64f7}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">NodeTreeVisualizer</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBX77A13F5E2C524DBD8E40675BC248105C">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<ProtectedString name="Source"><![CDATA[local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Traverse = require(`./Traverse`)
+local Maps = Traverse(`ServerStorage.Maps`)
+
+local Current = {}
+
+function Current:Fetch(): ObjectValue
+	local current: ObjectValue? = Maps:FindFirstChild(`Current`)
+	if not current then
+		current = Instance.new(`ObjectValue`)
+		current.Name = `Current`
+		current.Value = nil
+		current.Parent = Maps
+	end
+
+	return current
+end
+
+function Current:Set(set: Instance?): Instance?
+	local current = self:Fetch()
+	current.Value = set
+	return set
+end
+
+function Current:Get(): Instance?
+	local current = self:Fetch()
+	return current.Value
+end
+
+return Current]]></ProtectedString>
+					<string name="ScriptGuid">{31c6a5e4-ca3d-1380-cd9b-a4fb1f63970a}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Current</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBXD4CA68AE0B26489C89C360D684A2D77A">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<ProtectedString name="Source"><![CDATA[local function Singleton<T>(value: T | ""): T
+	return value
+end
+
+local TypeToValueBase = {
+	boolean = Singleton "BoolValue",
+	string = Singleton "StringValue",
+	number = Singleton "NumberValue",
+	Instance = Singleton "ObjectValue",
+	BrickColor = Singleton "BrickColorValue",
+	CFrame = Singleton "CFrameValue",
+	Color3 = Singleton "Color3Value",
+	Vector3 = Singleton "Vector3Value",
+}
+
+type InputType = keyof<typeof(TypeToValueBase)>
+type ValueBase = index<typeof(TypeToValueBase), InputType>
+
+return function(inputType: InputType): ValueBase
+	local class = TypeToValueBase[inputType]
+	return class
+end]]></ProtectedString>
+					<string name="ScriptGuid">{94f3187a-1076-56c8-5db4-645dd921fe7c}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">TypeToValueBase</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+		</Item>
+		<Item class="Folder" referent="RBXE287AB8E6D054B1890DB0E68641BC917">
+			<Properties>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">MapSelector</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+			<Item class="ModuleScript" referent="RBXD20648ED9D48477CB4DD907F57979D11">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<ProtectedString name="Source"><![CDATA[local CoreGui = game:GetService("CoreGui")
+
+local Create = require(`../Util/UI/Create`)
+local Frame = require(`../Util/UI/Frame`)
+local Label = require(`../Util/UI/Label`)
+local Button = require(`../Util/UI/Button`)
+local Seperator = require(`../Util/UI/Seperator`)
+
+local Current = require(`../Util/Current`)
+local Traverse = require(`../Util/Traverse`)
+
+local MapSelector = {}
+MapSelector.Name = `Map Selector` :: string
+MapSelector.Description = `Searches through all available maps in the place and allows you to select all editables` :: string
+MapSelector.Icon = 117093940689396 :: number
+
+local Maps = Traverse(`ServerStorage.Maps`)
+if Maps:FindFirstChild(`PvP`) then Maps = Maps.PvP end
+
+function MapSelector:Show()
+	if not self.Selected then return end
+	self.Selected.Parent = workspace
+end
+
+function MapSelector:Hide()
+	if not self.Selected then return end
+	self.Selected.Parent = Maps
+end
+
+function MapSelector:Select(newMap: Folder?)
+	self:Hide()
+	self.Selected = Current:Set(newMap)
+	self:Refresh()
+	self:Show()
+end
+
+function MapSelector:Refresh()
+	for index, button in (self.MapList:GetChildren()) do
+		if not button:IsA(`TextButton`) then continue end
+		
+		if button.Map.Value == self.Selected then
+			button.BackgroundColor3 = Color3.new(1, 1, 1)
+		else
+			button.BackgroundColor3 = Color3.new(0, 0, 0)
+		end
+	end
+end
+
+function MapSelector:Add(map: Instance)
+	if not map or not map:IsA(`Folder`) then return end
+
+	Button {
+		Text = map.Name,
+		Size = UDim2.new(1, 0, 0, 30),
+		Parent = self.MapList,
+		BackgroundTransparency = 0.75,
+
+		Children = {
+			Create "UITextSizeConstraint" {
+				MaxTextSize = 17
+			},
+			Create "ObjectValue" {
+				Name = `Map`,
+				Value = map
+			}
+		},
+
+		Activated = function()
+			if map == self.Selected then
+				self:Select(nil)
+			else
+				self:Select(map)
+			end
+		end
+	}
+end
+
+function MapSelector:Activate()
+	self.Selected = Current:Get()
+	self.MapList = Create "ScrollingFrame" {
+		Size = UDim2.new(1, 0, 1, -32),
+		Position = UDim2.new(0, 0, 0, 32),
+		BackgroundTransparency = 1,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		BottomImage = "rbxassetid://132155327",
+		TopImage = "rbxassetid://132155327",
+		BorderSizePixel = 0,
+		ScrollBarThickness = 5,
+		Children = {
+			Create "UIListLayout" {
+				Padding = UDim.new(0, 1)
+			}
+		}
+	}
+	
+	for index, map in (Maps:GetChildren()) do
+		self:Add(map)
+	end
+	self:Add(self.Selected)
+	self:Refresh()
+	
+	self.UI = Create "ScreenGui" {
+		IgnoreGuiInset = true,
+
+		Parent = CoreGui,
+		Children = {
+			Frame {
+				Size = UDim2.new(0, 200, 1, -100),
+				Position = UDim2.fromOffset(50, 50),
+
+				Children = {
+					Label {
+						Text = `Maps`,
+						Size = UDim2.new(1, 0, 0, 30)
+					},
+					Seperator {
+						Position = UDim2.new(0, 0, 0, 30)
+					},
+					self.MapList,
+				}
+			}
+		}
+	}
+end
+
+function MapSelector:Deactivate()
+	if self.UI then
+		self.UI:Destroy()
+		self.UI = nil
+	end
+end
+
+return MapSelector]]></ProtectedString>
+					<string name="ScriptGuid">{fa4c578a-3f66-72fb-20df-5d1d7b2380c7}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Init</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+		</Item>
+		<Item class="Folder" referent="RBXE3F4D8ADDCC04CF98AA000757F92654A">
+			<Properties>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">Serializer</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+			<Item class="ModuleScript" referent="RBXCAE9AB7D4C9B42FAAB6A85E6572A36CF">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<ProtectedString name="Source"><![CDATA[local EncodingService = game:GetService("EncodingService")
+local HttpService = game:GetService("HttpService")
+local ScriptEditorService = game:GetService("ScriptEditorService")
+
+local Shared = require(`./Shared`)
+local Instances = require(`./Instances`)
+local FeatureCheck = require(`../Util/FeatureCheck`)
+local NodeTreeVisualizer = require(`../Util/NodeTreeVisualizer`)
+
+local Write = {}
+local RootNode: Shared.Node?
+local RootObject: Instance?
+
+local function WriteValue(value: any, valueType: string, propOrAtt: string?)
+	local valueType = valueType or typeof(value)
+	local call = Write[valueType]
+	if not call then
+		warn(`Type {valueType} of {propOrAtt and `{propOrAtt} ` or ``}{value} cannot be serialized`)
+		return
+	end
+
+	return call(value)
+end
+
+local function GetIndex(object: Instance)
+	local index = 1
+	for _, child in (object.Parent:GetChildren()) do
+		if child == object then
+			return index
+		elseif Instances[child.ClassName] ~= nil then
+			index += 1
+		end
+	end
+
+	return index
+end
+
+function Write.string(input: string)
+	return input
+end
+
+function Write.number(number: number)
+	return number
+end
+
+function Write.boolean(bool: boolean)
+	return bool
+end
+
+function Write.Color3(color: Color3)
+	return {color.R, color.G, color.B}
+end
+
+function Write.Vector3(vector: Vector3)
+	return {vector.X, vector.Y, vector.Z}
+end
+
+function Write.CFrame(cf: CFrame)
+	return {cf:GetComponents()}
+end
+
+function Write.UDim2(udim: UDim2)
+	return {
+		udim.X.Scale, udim.X.Offset,
+		udim.Y.Scale, udim.Y.Offset
+	}
+end
+
+function Write.EnumItem(enumItem: EnumItem)
+	return tostring(enumItem)
+end
+
+function Write.BrickColor(color: BrickColor)
+	return color.Number
+end
+
+function Write.NumberSequence(seq: NumberSequence)
+	local keypoints = {}
+	for _, k in (seq.Keypoints) do
+		table.insert(keypoints, {
+			Time = k.Time,
+			Value = k.Value,
+			Envelope = k.Envelope
+		})
+	end
+
+	return keypoints
+end
+
+function Write.ColorSequence(seq: ColorSequence)
+	local keypoints = {}
+	for _, k in (seq.Keypoints) do
+		table.insert(keypoints, {
+			Time = k.Time,
+			Color = Write.Color3(k.Value)
+		})
+	end
+
+	return keypoints
+end
+
+function Write.NumberRange(range: NumberRange)
+	return {range.Min, range.Max}
+end
+
+function Write.Rect(rect: Rect)
+	return {
+		rect.Min.X, rect.Min.Y,
+		rect.Max.X, rect.Max.Y
+	}
+end
+
+function Write.UDim(udim: UDim)
+	return {udim.Scale, udim.Offset}
+end
+
+function Write.Vector2(vector: Vector2)
+	return {vector.X, vector.Y}
+end
+
+function Write.InstanceReference(object: Instance?)
+	if not object then return end
+	
+	local path = {}
+	local current = object
+	while current ~= RootObject do
+		local index = GetIndex(current)
+		if index then
+			table.insert(path, index)
+		end
+		
+		current = current.Parent
+	end
+	
+	for i = 1, math.floor(#path / 2) do
+		path[i], path[#path - i + 1] = path[#path - i + 1], path[i]
+	end
+	
+	RootNode.Config.Expensives += 1
+	return table.concat(path, `.`)
+end
+
+function Write.Instance(object: Instance, direct: boolean): Shared.Node
+	if not Instances[object.ClassName] then
+		warn(`Unknown instance {object.Name} of class {object.ClassName} will not be serialized`)
+		return
+	end
+	
+	local node: Shared.Node = {
+		Class = object.ClassName,
+		Properties = {},
+		Attributes = {},
+		Children = {}
+	}
+	if direct then
+		RootNode = node
+		RootNode.Config = {
+			Expensives = 0,
+		}
+	end
+	
+	local availableProperties = Instances[object.ClassName]
+	for _, propertyData in (availableProperties) do
+		local property, propertyType, default = unpack(propertyData)
+		if object[property] == default then continue end
+		node.Properties[property] = WriteValue(object[property], propertyType, `property`)
+	end
+	
+	for attribute, value in (object:GetAttributes()) do
+		if attribute:sub(1, 3) == `RBX` then continue end
+		node.Attributes[attribute] = WriteValue(value, nil, `attribute`)
+	end
+	
+	for _, child in (object:GetChildren()) do
+		local childNode = Write.Instance(child)
+		if not childNode then continue end
+		table.insert(node.Children, childNode)
+	end
+	
+	return node
+end
+
+function Write.Map(map: Instance)
+	RootObject = map:Clone()
+	local nodeTree = Write.Instance(RootObject, true)
+	if FeatureCheck(`Debug`) then
+		local previous = workspace:FindFirstChild(`Node Tree`)
+		if previous and previous:IsA(`ModuleScript`) then
+			previous:Destroy()
+		end
+		
+		local ms = Instance.new(`ModuleScript`)
+		ScriptEditorService:UpdateSourceAsync(ms, function()
+			return `return {NodeTreeVisualizer(nodeTree)}`
+		end)
+		ms.Name = `Node Tree`
+		ms.Parent = workspace
+		ScriptEditorService:OpenScriptDocumentAsync(ms)
+	end
+	
+	nodeTree = HttpService:JSONEncode(RootNode)
+	
+	local nodeTreeBuffer = buffer.fromstring(nodeTree)
+	local compressedNodeTree = EncodingService:Base64Encode(
+		EncodingService:CompressBuffer(nodeTreeBuffer, Enum.CompressionAlgorithm.Zstd)
+	)
+	
+	local compressedString = buffer.readstring(compressedNodeTree, 0, buffer.len(compressedNodeTree))
+	if FeatureCheck(`Debug`) then
+		print(`=== Compression Stats ===`)
+		print(`Before Compression: {#nodeTree * 0.001}K`)
+		print(`After Compression: {#compressedString * 0.001}K`)
+	end
+	
+	RootNode = nil
+	RootObject:Destroy()
+	RootObject = nil
+	return compressedString
+end
+
+return Write]]></ProtectedString>
+					<string name="ScriptGuid">{7cc3b943-be94-d1b7-f077-981937f60cdb}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Write</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBX6A59C2924EF547A6886F66C6605CD53A">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<ProtectedString name="Source"><![CDATA[local AssetService = game:GetService("AssetService")
+local EncodingService = game:GetService("EncodingService")
+local HttpService = game:GetService("HttpService")
+
+local Shared = require(`./Shared`)
+local Instances = require(`./Instances`)
+local Traverse = require(`../Util/Traverse`)
+
+local Read = {}
+local RootNode: Shared.Node?
+
+local function ReadValue(value: any, valueType: string, propOrAtt: string?)
+	local valueType = valueType or typeof(value)
+	local call = Read[valueType]
+	if not call then
+		warn(`Type {valueType} of {propOrAtt and `{propOrAtt} ` or ``}{value} cannot be read`)
+		return
+	end
+
+	return call(value)
+end
+
+function Read.string(input: string)
+	return input
+end
+
+function Read.number(number: number)
+	return number
+end
+
+function Read.boolean(bool: boolean)
+	return bool
+end
+
+function Read.Color3(color: {number})
+	return Color3.new(unpack(color))
+end
+
+function Read.Vector3(vector: {number})
+	return Vector3.new(unpack(vector))
+end
+
+function Read.CFrame(cf: {number})
+	return CFrame.new(unpack(cf))
+end
+
+function Read.UDim2(udim: {number})
+	return UDim2.new(unpack(udim))
+end
+
+function Read.EnumItem(enumItem: string)
+	local enumName, enumType, enumItem = unpack(string.split(enumItem, `.`))
+	if not enumName or not enumType or not enumItem or enumName ~= `Enum` then
+		warn(`Invalid EnumItem string {enumItem}`)
+		return
+	end
+
+	return Enum[enumType][enumItem]
+end
+
+
+function Read.BrickColor(color: number)
+	return BrickColor.new(color)
+end
+
+function Read.NumberSequence(seq: {[number]: {[string]: any}})
+	local keypoints = {}
+	for _, k in (seq) do
+		table.insert(keypoints, NumberSequenceKeypoint.new(k.Time, k.Value, k.Envelope))
+	end
+
+	return NumberSequence.new(keypoints)
+end
+
+function Read.ColorSequence(seq: {[number]: {[string]: any}})
+	local keypoints = {}
+	for _, k in (seq) do
+		table.insert(keypoints, ColorSequenceKeypoint.new(k.Time, Read.Color3(k.Color)))
+	end
+
+	return ColorSequence.new(keypoints)
+end
+
+function Read.NumberRange(range: {number})
+	return NumberRange.new(unpack(range))
+end
+
+function Read.Rect(rect: {number})
+	local min = Vector2.new(rect[1], rect[2])
+	local max = Vector2.new(rect[3], rect[4])
+	return Rect.new(min, max)
+end
+
+function Read.UDim(udim: {number})
+	return UDim.new(unpack(udim))
+end
+
+function Read.Vector2(vector)
+	return Vector2.new(unpack(vector))
+end
+
+function Read.Mesh(id: string)
+	local cache = Traverse(`ReplicatedStorage.Assets.MeshCache`)
+	local mesh: MeshPart? = cache:FindFirstChild(id)
+	local skipProperties = {MeshId = true}
+	if mesh then
+		mesh = mesh:Clone()
+	else
+		local success, err = pcall(function()
+			mesh = AssetService:CreateMeshPartAsync(Content.fromUri(id))
+		end)
+		
+		if success then
+			mesh.Name = id
+			mesh.Parent = cache
+			mesh = mesh:Clone()
+		else
+			warn(`Mesh fetch error {err}`)
+			mesh = Instance.new(`Part`)
+			skipProperties.TextureID = true
+		end
+	end
+	
+	return mesh, skipProperties
+end
+
+function Read.InstanceReference(node: Shared.Node, property: string)
+	if node == nil or not node.Properties[property] then return end
+	
+	local path = string.split(node.Properties[property], `.`)
+	local current = RootNode
+	for _, move in (path) do
+		current = current.Children[tonumber(move)]
+	end
+	
+	repeat task.wait() until current.Object
+	node.Object[property] = current.Object
+	return
+end
+
+function Read.Instance(node: Shared.Node, direct: boolean)
+	if not Instances[node.Class] then
+		warn(`Unknown node with name {node.Properties.Name} of class {node.Class} will not be read`)
+		return
+	end
+	
+	local object: Instance?
+	local skipProperties: {[string]: boolean} = {}
+	if node.Class == `MeshPart` and node.Properties.MeshId and node.Properties.MeshId ~= `` then
+		object, skipProperties = Read.Mesh(node.Properties.MeshId)
+	else
+		object = Instance.new(node.Class)
+	end
+	
+	local availableProperties = Instances[object.ClassName]
+	for _, propertyData in (availableProperties) do
+		local property, propertyType, default = unpack(propertyData)
+		if skipProperties[property] then continue end
+		
+		if propertyType == `InstanceReference` then
+			task.spawn(Read.InstanceReference, node, property)
+		else
+			object[property] = node.Properties[property] and ReadValue(node.Properties[property], propertyType, `property`) or default
+		end
+	end
+	
+	for attribute, value in (node.Attributes) do
+		object:SetAttribute(attribute, ReadValue(value, nil, `attribute`))
+	end
+	
+	for _, childNode in (node.Children) do
+		local child = Read.Instance(childNode)
+		if not child then continue end
+		child.Parent = object
+	end
+	
+	node.Object = object
+	return object
+end
+
+function Read.Map(code: string)
+	local compressedNodeTree = buffer.fromstring(code)
+	local nodeTreeBuffer = EncodingService:DecompressBuffer(
+		EncodingService:Base64Decode(compressedNodeTree), Enum.CompressionAlgorithm.Zstd
+	)
+	
+	local clearCode = buffer.readstring(nodeTreeBuffer, 0, buffer.len(nodeTreeBuffer))
+	local nodeTree = HttpService:JSONDecode(clearCode)
+	
+	RootNode = nodeTree
+	local map = Read.Instance(nodeTree)
+	return map
+end
+
+return Read]]></ProtectedString>
+					<string name="ScriptGuid">{9501ff80-411d-0c9b-8757-f0764378230f}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Read</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBXAC3F6F70A9374A489F4DE81F5F08712A">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<ProtectedString name="Source"><![CDATA[local Shared = {}
+
+export type Node = {
+	Class: string,
+	Object: Instance?,
+	Properties: {
+		[string]: any
+	},
+	Attributes: {
+		[string]: any
+	},
+	Children: {
+		[number]: Node
+	},
+	Config: {
+		[string]: any
+	}?
+}
+
+return Shared]]></ProtectedString>
+					<string name="ScriptGuid">{7f4d397a-a368-f9c3-c925-cc20e5026f3e}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Shared</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBXCF202C141C294C45B1BD319205F23BAC">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<ProtectedString name="Source"><![CDATA[return {
+	Part = {
+		{"Name", "string", "Part"},
+		{"Anchored", "boolean", false},
+		{"CanCollide", "boolean", true},
+		{"CanTouch", "boolean", true},
+		{"CanQuery", "boolean", true},
+		{"Massless", "boolean", false},
+		{"Locked", "boolean", false},
+		{"Transparency", "number", 0},
+		{"Reflectance", "number", 0},
+		{"CastShadow", "boolean", true},
+		{"Material", "EnumItem", Enum.Material.Plastic},
+		{"Color", "Color3", Color3.fromRGB(163, 162, 165)},
+		{"Size", "Vector3", Vector3.new(4, 1, 2)},
+		{"CFrame", "CFrame", CFrame.identity},
+		{"Shape", "EnumItem", Enum.PartType.Block},
+		{"TopSurface", "EnumItem", Enum.SurfaceType.Smooth},
+		{"BottomSurface", "EnumItem", Enum.SurfaceType.Smooth},
+		{"LeftSurface", "EnumItem", Enum.SurfaceType.Smooth},
+		{"RightSurface", "EnumItem", Enum.SurfaceType.Smooth},
+		{"FrontSurface", "EnumItem", Enum.SurfaceType.Smooth},
+		{"BackSurface", "EnumItem", Enum.SurfaceType.Smooth},
+	},
+
+	MeshPart = {
+		{"Name", "string", "MeshPart"},
+		{"Anchored", "boolean", false},
+		{"CanCollide", "boolean", true},
+		{"CanTouch", "boolean", true},
+		{"CanQuery", "boolean", true},
+		{"Massless", "boolean", false},
+		{"Transparency", "number", 0},
+		{"Reflectance", "number", 0},
+		{"CastShadow", "boolean", true},
+		{"Material", "EnumItem", Enum.Material.Plastic},
+		{"Color", "Color3", Color3.fromRGB(163, 162, 165)},
+		{"Size", "Vector3", Vector3.new(1, 1, 1)},
+		{"CFrame", "CFrame", CFrame.identity},
+		{"MeshId", "string", ""},
+		{"TextureID", "string", ""},
+	},
+
+	Model = {
+		{"Name", "string", "Model"},
+	},
+
+	Folder = {
+		{"Name", "string", "Folder"},
+	},
+
+	WedgePart = {
+		{"Name", "string", "Wedge"},
+		{"Anchored", "boolean", false},
+		{"CanCollide", "boolean", true},
+		{"Transparency", "number", 0},
+		{"Material", "EnumItem", Enum.Material.Plastic},
+		{"Color", "Color3", Color3.fromRGB(163, 162, 165)},
+		{"Size", "Vector3", Vector3.new(4, 1, 2)},
+		{"CFrame", "CFrame", CFrame.identity},
+	},
+
+	CornerWedgePart = {
+		{"Name", "string", "CornerWedge"},
+		{"Anchored", "boolean", false},
+		{"CanCollide", "boolean", true},
+		{"Transparency", "number", 0},
+		{"Material", "EnumItem", Enum.Material.Plastic},
+		{"Color", "Color3", Color3.fromRGB(163, 162, 165)},
+		{"Size", "Vector3", Vector3.new(4, 1, 2)},
+		{"CFrame", "CFrame", CFrame.identity},
+	},
+
+	TrussPart = {
+		{"Name", "string", "Truss"},
+		{"Anchored", "boolean", false},
+		{"CanCollide", "boolean", true},
+		{"Transparency", "number", 0},
+		{"Material", "EnumItem", Enum.Material.Metal},
+		{"Color", "Color3", Color3.fromRGB(163, 162, 165)},
+		{"Size", "Vector3", Vector3.new(2, 2, 2)},
+		{"CFrame", "CFrame", CFrame.identity},
+		{"Style", "EnumItem", Enum.Style.AlternatingSupports},
+	},
+
+	Decal = {
+		{"Name", "string", "Decal"},
+		{"Texture", "string", ""},
+		{"Transparency", "number", 0},
+		{"Color3", "Color3", Color3.new(1, 1, 1)},
+		{"Face", "EnumItem", Enum.NormalId.Front},
+	},
+
+	Texture = {
+		{"Name", "string", "Texture"},
+		{"Texture", "string", ""},
+		{"Transparency", "number", 0},
+		{"Color3", "Color3", Color3.new(1, 1, 1)},
+		{"Face", "EnumItem", Enum.NormalId.Front},
+		{"StudsPerTileU", "number", 1},
+		{"StudsPerTileV", "number", 1},
+		{"OffsetStudsU", "number", 0},
+		{"OffsetStudsV", "number", 0},
+	},
+
+	PointLight = {
+		{"Name", "string", "PointLight"},
+		{"Brightness", "number", 1},
+		{"Range", "number", 8},
+		{"Color", "Color3", Color3.new(1, 1, 1)},
+		{"Enabled", "boolean", true},
+		{"Shadows", "boolean", false},
+	},
+
+	SpotLight = {
+		{"Name", "string", "SpotLight"},
+		{"Brightness", "number", 1},
+		{"Range", "number", 8},
+		{"Angle", "number", 45},
+		{"Face", "EnumItem", Enum.NormalId.Front},
+		{"Color", "Color3", Color3.new(1, 1, 1)},
+		{"Enabled", "boolean", true},
+		{"Shadows", "boolean", false},
+	},
+
+	SurfaceLight = {
+		{"Name", "string", "SurfaceLight"},
+		{"Brightness", "number", 1},
+		{"Range", "number", 8},
+		{"Angle", "number", 90},
+		{"Face", "EnumItem", Enum.NormalId.Front},
+		{"Color", "Color3", Color3.new(1, 1, 1)},
+		{"Enabled", "boolean", true},
+		{"Shadows", "boolean", false},
+	},
+
+	Configuration = {
+		{"Name", "string", "Configuration"}
+	},
+	
+	Fire = {
+		{"Color", "Color3", Color3.fromRGB(236, 139, 70)},
+		{"Enabled", "boolean", true},
+		{"Heat", "number", 9},
+		{"Name", "string", "Fire"},
+		{"SecondaryColor", "Color3", Color3.fromRGB(139, 80, 55)},
+		{"Size", "number", 5},
+		{"TimeScale", "number", 1}
+	},
+	
+	ParticleEmitter = {
+		{"Brightness", "number", 1},
+		{"Color", "ColorSequence", ColorSequence.new(Color3.new(1, 1, 1))},
+		{"LightEmission", "number", 0.5},
+		{"LightInfluence", "number", 0},
+		{"Orientation", "EnumItem", Enum.ParticleOrientation.FacingCamera},
+		{"Size", "NumberSequence", NumberSequence.new(1)},
+		{"Squash", "NumberSequence", NumberSequence.new(0)},
+		{"Texture", "string", "rbxasset://textures/particles/sparkles_main.dds"},
+		{"Transparency", "NumberSequence", NumberSequence.new(0)},
+		{"ZOffset", "number", 0},
+		{"EmissionDirection", "EnumItem", Enum.NormalId.Top},
+		{"Enabled", "boolean", true},
+		{"Lifetime", "NumberRange", NumberRange.new(5, 10)},
+		{"Rate", "number", 20},
+		{"Rotation", "NumberRange", NumberRange.new(0)},
+		{"RotSpeed", "NumberRange", NumberRange.new(0)},
+		{"Speed", "NumberRange", NumberRange.new(5)},
+		{"SpreadAngle", "Vector2", Vector2.new(0, 0)},
+		{"Shape", "EnumItem", Enum.ParticleEmitterShape.Box},
+		{"ShapeInOut", "EnumItem", Enum.ParticleEmitterShapeInOut.Outward},
+		{"ShapeStyle", "EnumItem", Enum.ParticleEmitterShapeStyle.Volume},
+		{"Acceleration", "Vector3", Vector3.new(0, 0, 0)},
+		{"Drag", "number", 0},
+		{"LockedToPart", "boolean", false},
+		{"TimeScale", "number", 1},
+		{"VelocityInheritance", "number", 0},
+		{"WindAffectsDrag", "boolean", 0},
+	},
+	
+	SpecialMesh = {
+		{"MeshId", "string", ""},
+		{"MeshType", "EnumItem", Enum.MeshType.Head},
+		{"Name", "string", "SpecialMesh"},
+		{"Offset", "Vector3", Vector3.new(0, 0, 0)},
+		{"Scale", "Vector3", Vector3.new(1, 1, 1)},
+		{"VertexColor", "Vector3", Vector3.new(1, 1, 1)}
+	},
+	
+	Sky = {
+		{"CelestialBodiesShown", "boolean", true},
+		{"MoonAngularSize", "number", 11},
+		{"MoonTextureId", "string", "rbxasset://sky/moon.jpg"},
+		{"SkyboxBk", "string", "rbxasset://textures/sky/sky512_bk.tex"},
+		{"SkyboxDn", "string", "rbxasset://textures/sky/sky512_dn.tex"},
+		{"SkyboxFt", "string", "rbxasset://textures/sky/sky512_ft.tex"},
+		{"SkyboxLf", "string", "rbxasset://textures/sky/sky512_lf.tex"},
+		{"SkyboxOrientation", "Vector3", Vector3.new(0, 0, 0)},
+		{"SkyboxRt", "string", "rbxasset://textures/sky/sky512_rt.tex"},
+		{"SkyboxUp", "string", "rbxasset://textures/sky/sky512_up.tex"},
+		{"StarCount", "number", 3000},
+		{"SunAngularSize", "number", 21},
+		{"SunTextureId", "string", "rbxasset://sky/sun.jpg"},
+	},
+
+	Color3Value = {
+		{"Name", "string", "Color3Value"},
+		{"Value", "Color3", Color3.new()},
+	},
+
+	NumberValue = {
+		{"Name", "string", "NumberValue"},
+		{"Value", "number", 0},
+	},
+
+	BloomEffect = {
+		{"Name", "string", "Bloom"},
+		{"Enabled", "boolean", true},
+		{"Intensity", "number", 1},
+		{"Size", "number", 24},
+		{"Threshold", "number", 2}
+	},
+
+	DepthOfFieldEffect = {
+		{"Name", "string", "DepthOfField"},
+		{"Enabled", "boolean", true},
+		{"FarIntensity", "number", 0.75},
+		{"FocusDistance", "number", 0.05},
+		{"InFocusRadius", "number", 10},
+		{"NearIntensity", "number", 0.75}
+	},
+	
+	SunRaysEffect = {
+		{"Name", "string", "SunRaysEffect"},
+		{"Enabled", "boolean", true},
+		{"Intensity", "number", 0.25},
+		{"Spread", "number", 1}
+	},
+	
+	Attachment = {
+		{"Visible", "boolean", false},
+		{"Name", "string", "Attachment"},
+		{"CFrame", "CFrame", CFrame.new()},
+	},
+	
+	BoolValue = {
+		{"Name", "string", "Value"},
+		{"Value", "boolean", false}
+	},
+	
+	Vector3Value = {
+		{"Name", "string", "Value"},
+		{"Value", "Vector3", Vector3.new()}
+	},
+	
+	SurfaceGui = {
+		{"ZOffset", "number", 0},
+		{"Active", "boolean", true},
+		{"Adornee", "Instance", nil},
+		{"Enabled", "boolean", true},
+		{"Face", "EnumItem", Enum.NormalId.Front},
+		{"LightInfluence", "number", 1},
+		{"MaxDistance", "number", 1000},
+		{"Name", "string", "SurfaceGui"},
+		{"ResetOnSpawn", "boolean", true},
+		{"ToolPunchThroughDistance", "boolean", false},
+		{"ZIndexBehavior", "EnumItem", Enum.ZIndexBehavior.Sibling},
+		{"ClipsDescendants", "boolean", true},
+		{"SelectionGroup", "boolean", true},
+		{"PixelsPerStud", "number", 50},
+		{"SizingMode", "EnumItem", Enum.SurfaceGuiSizingMode.PixelsPerStud}
+	},
+	
+	Sound = {
+		{"Name", "string", "Sound"},
+		{"PlayOnRemove", "boolean", false},
+		{"SoundId", "string", ""},
+		{"RollOffMaxDistance", "number", 10000},
+		{"RollOffMinDistance", "number", 10},
+		{"RollOffMode", "EnumItem", Enum.RollOffMode.Linear},
+		{"Looped", "boolean", false},
+		{"PlaybackRegionsEnabled", "boolean", false},
+		{"PlaybackSpeed", "number", 1},
+		{"Playing", "boolean", false},
+		{"TimePosition", "number", 0},
+		{"Volume", "number", 0.5}
+	},
+	
+	Beam = {
+		{"Color", "ColorSequence", ColorSequence.new(Color3.new(1, 1, 1))},
+		{"Enabled", "boolean", true},
+		{"LightEmission", "number", 0},
+		{"LightInfluence", "number", 1},
+		{"Texture", "string", ""},
+		{"TextureLength", "number", 1},
+		{"TextureMode", "EnumItem", Enum.TextureMode.Stretch},
+		{"TextureSpeed", "number", 1},
+		{"Transparency", "NumberSequence", NumberSequence.new(0.5)},
+		{"ZOffset", "number", 0},
+		{"Attachment0", "InstanceReference", nil},
+		{"Attachment1", "InstanceReference", nil},
+		{"CurveSize0", "number", 0},
+		{"CurveSize1", "number", 0},
+		{"FaceCamera", "boolean", false},
+		{"Segments", "number", 10},
+		{"Width0", "number", 1},
+		{"Width1", "number", 1},
+		{"Name", "string", "Beam"}
+	},
+
+	Weld = {
+		{"C0", "CFrame", CFrame.new()},
+		{"C1", "CFrame", CFrame.new()},
+		{"Part0", "InstanceReference", nil},
+		{"Part1", "InstanceReference", nil},
+		{"Enabled", "boolean", true},
+		{"Name", "string", "Weld"}
+	},
+
+	WeldConstraint = {
+		{"Part0", "InstanceReference", nil},
+		{"Part1", "InstanceReference", nil},
+		{"Enabled", "boolean", true},
+		{"Name", "string", "Weld"}
+	},
+	
+	Humanoid = {
+		{"AutoJumpEnabled", "boolean", true},
+		{"AutoRotate", "boolean", true},
+		{"BreakJointsOnDeath", "boolean", true},
+		{"DisplayDistanceType", "EnumItem", Enum.HumanoidDisplayDistanceType.Viewer},
+		{"Health", "number", 100},
+		{"HealthDisplayDistance", "number", 100},
+		{"HealthDisplayType", "EnumItem", Enum.HumanoidHealthDisplayType.DisplayWhenDamaged},
+		{"HipHeight", "number", 0},
+		{"JumpHeight", "number", 7.2},
+		{"JumpPower", "number", 50},
+		{"MaxHealth", "number", 100},
+		{"NameDisplayDistance", "number", 100},
+		{"NameOcclusion", "EnumItem", Enum.NameOcclusion.OccludeAll},
+		{"PlatformStand", "boolean", false},
+		{"RequiresNeck", "boolean", true},
+		{"RigType", "EnumItem", Enum.HumanoidRigType.R6},
+		{"Sit", "boolean", false},
+		{"UseJumpPower", "boolean", true},
+		{"WalkSpeed", "number", 16},
+		{"Name", "string", "Humanoid"}
+	},
+	
+	Motor6D = {
+		{"C0", "CFrame", CFrame.new()},
+		{"C1", "CFrame", CFrame.new()},
+		{"Part0", "InstanceReference", nil},
+		{"Part1", "InstanceReference", nil},
+		{"Enabled", "boolean", true},
+		{"Transform", "CFrame", CFrame.new()},
+		{"DesiredAngle", "number", 0},
+		{"CurrentAngle", "number", 0},
+		{"MaxVelocity", "number", 0.1},
+		{"Name", "string", "Motor6D"}
+	},
+
+	Snap = {
+		{"C0", "CFrame", CFrame.new()},
+		{"C1", "CFrame", CFrame.new()},
+		{"Part0", "InstanceReference", nil},
+		{"Part1", "InstanceReference", nil},
+		{"Enabled", "boolean", true},
+		{"Name", "string", "Snap"}
+	},
+	
+	Animator = {
+		{"PreferLodEnabled", "boolean", true},
+		{"Name", "string", "Animator"}
+	},
+
+	Shirt = {
+		{"Color3", "Color3", Color3.new(1, 1, 1)},
+		{"ShirtTemplate", "string", ""},
+		{"Name", "string", "Shirt"},
+	},
+
+	Pants = {
+		{"Color3", "Color3", Color3.new(1, 1, 1)},
+		{"PantsTemplate", "string", ""},
+		{"Name", "string", "Pants"}
+	},
+	
+	HingeConstraint = {
+		{"Color", "BrickColor", BrickColor.new()},
+		{"Radius", "number", 0.15},
+		{"Visible", "boolean", false},
+		{"Enabled", "boolean", true},
+		{"Attachment0", "InstanceReference", nil},
+		{"Attachment1", "InstanceReference", nil},
+		{"ActuatorType", "EnumItem", Enum.ActuatorType.None},
+		{"LimitsEnabled", "boolean", false},
+		{"Name", "string", "HingeConstraint"}
+	},
+	
+	Lighting = {
+		{"Ambient", "Color3", Color3.fromRGB(138, 138, 138)},
+		{"Brightness", "number", 2},
+		{"ColorShift_Bottom", "Color3", Color3.new()},
+		{"ColorShift_Top", "Color3", Color3.new()},
+		{"EnvironmentDiffuseScale", "number", 0}, 
+		{"EnvironmentSpecularScale", "number", 0},
+		{"GlobalShadows", "boolean", true},
+		{"OutdoorAmbient", "Color3", Color3.fromRGB(128, 128, 128)},
+		{"ClockTime", "number", 14},
+		{"GeographicLatitude", "number", 56.45},
+		{"ExposureCompensation", "number", 0},
+		{"FogColor", "Color3", Color3.fromRGB(192, 192, 192)},
+		{"FogEnd", "number", 100000},
+		{"FogStart", "number", 0}
+	}
+}]]></ProtectedString>
+					<string name="ScriptGuid">{413a7e98-cfdd-2324-beb6-d25aa1bffc5d}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Instances</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+			<Item class="ModuleScript" referent="RBX93F28021A30F46DD8712171B938CD735">
+				<Properties>
+					<Content name="LinkedSource"><null></null></Content>
+					<ProtectedString name="Source"><![CDATA[local CoreGui = game:GetService("CoreGui")
+local ScriptEditorService = game:GetService("ScriptEditorService")
+local Selection = game:GetService("Selection")
+
+local Write = require(`./Write`)
+local Read = require(`./Read`)
+local Current = require(`../Util/Current`)
+local FeatureCheck = require(`../Util/FeatureCheck`)
+
+local Create = require(`../Util/UI/Create`)
+local Frame = require(`../Util/UI/Frame`)
+local Label = require(`../Util/UI/Label`)
+local Button = require(`../Util/UI/Button`)
+local TextBox = require(`../Util/UI/TextBox`)
+
+local Serializer = {}
+Serializer.Priority = 1
+Serializer.Name = `Serializer` :: string
+Serializer.Description = `Serializes your map into a string, allowing you to easily test it in-game` :: string
+Serializer.Icon = 127938367765919 :: number
+
+function Serializer:Activate()
+	local SerializeButton
+	local ReadbackInput
+	local PreviewButton
+	SerializeButton = Button {
+		Text = `Serialize`,
+
+		Size = UDim2.fromOffset(200, 30),
+		Position = UDim2.fromOffset(50, 50),
+
+		Activated = function()
+			local previous = workspace:FindFirstChild(`Scarlet Map Code`)
+			if previous and previous:IsA(`Script`) and previous.Disabled then
+				previous:Destroy()
+			end
+			
+			local current = Current:Get()
+			if not current then return end
+			
+			local code = Write.Map(current)
+			local copy = Instance.new(`Script`)
+			copy.Disabled = true
+			ScriptEditorService:UpdateSourceAsync(copy, function()
+				return code
+			end)
+			copy.Name = `Scarlet Map Code`
+			copy.Parent = workspace
+			Selection:Set({copy})
+			ScriptEditorService:OpenScriptDocumentAsync(copy)
+		end,
+	}
+	ReadbackInput = TextBox {
+		PlaceholderText = `Readback`,
+
+		Size = UDim2.fromOffset(200, 30),
+		Position = UDim2.fromOffset(270, 50),
+
+		FocusLost = function(enter: boolean)
+			if not enter then return end
+
+			local code = ReadbackInput.Text
+			local map = Read.Map(code)
+			if not map then return end
+			
+			map.Parent = workspace
+		end,
+	}
+	PreviewButton = Button {
+		Text = `Preview`,
+		
+		Size = UDim2.fromOffset(200, 30),
+		Position = UDim2.new(0, 50, 1, -80),
+		
+		Activated = function()
+			local current = Current:Get()
+			if not current then return end
+			
+			local code = Write.Map(current)
+			local map = Read.Map(code)
+			if not map then return end
+			
+			map.Parent = workspace
+		end,
+	}
+	
+	self.UI = Create "ScreenGui" {
+		IgnoreGuiInset = true,
+		
+		Parent = CoreGui,
+		Children = {
+			SerializeButton,
+			ReadbackInput,
+			FeatureCheck(`Debug`) and PreviewButton or nil,
+		}
+	}
+end
+
+function Serializer:Deactivate()
+	if self.UI then
+		self.UI:Destroy()
+		self.UI = nil
+	end
+end
+
+return Serializer]]></ProtectedString>
+					<string name="ScriptGuid">{05a4a027-f9c5-0729-d389-982c6b4a2e3c}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Init</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+		</Item>
+	</Item>
+</roblox>
