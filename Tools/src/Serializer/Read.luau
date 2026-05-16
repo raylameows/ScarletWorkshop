@@ -125,7 +125,7 @@ function Read.Mesh(id: string)
 end
 
 function Read.InstanceReference(node: Shared.Node, property: string)
-	if node == nil or not node.Properties[property] then return end
+	if node == nil or node.Properties[property] == nil then return end
 	
 	local path = string.split(node.Properties[property], `.`)
 	local current = RootNode
@@ -160,7 +160,7 @@ function Read.Instance(node: Shared.Node, direct: boolean)
 		if propertyType == `InstanceReference` then
 			task.spawn(Read.InstanceReference, node, property)
 		else
-			object[property] = node.Properties[property] and ReadValue(node.Properties[property], propertyType, `property`) or default
+			object[property] = node.Properties[property] == nil and default or ReadValue(node.Properties[property], propertyType, `property`)
 		end
 	end
 	
