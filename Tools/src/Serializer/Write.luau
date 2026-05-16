@@ -183,7 +183,7 @@ end
 function Write.Map(map: Instance)
 	RootObject = map:Clone()
 	local nodeTree = Write.Instance(RootObject, true)
-	if FeatureCheck(`Debug`) then
+	if FeatureCheck(`NodeTree`) then
 		local previous = workspace:FindFirstChild(`Node Tree`)
 		if previous and previous:IsA(`ModuleScript`) then
 			previous:Destroy()
