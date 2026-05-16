@@ -53,7 +53,6 @@ return {
 		{"Name", "string", "Wedge"},
 		{"Anchored", "boolean", false},
 		{"CanCollide", "boolean", true},
-		{"CastShadow", "boolean", true},
 		{"Transparency", "number", 0},
 		{"Material", "EnumItem", Enum.Material.Plastic},
 		{"Color", "Color3", Color3.fromRGB(163, 162, 165)},
@@ -65,7 +64,6 @@ return {
 		{"Name", "string", "CornerWedge"},
 		{"Anchored", "boolean", false},
 		{"CanCollide", "boolean", true},
-		{"CastShadow", "boolean", true},
 		{"Transparency", "number", 0},
 		{"Material", "EnumItem", Enum.Material.Plastic},
 		{"Color", "Color3", Color3.fromRGB(163, 162, 165)},
@@ -77,7 +75,6 @@ return {
 		{"Name", "string", "Truss"},
 		{"Anchored", "boolean", false},
 		{"CanCollide", "boolean", true},
-		{"CastShadow", "boolean", true},
 		{"Transparency", "number", 0},
 		{"Material", "EnumItem", Enum.Material.Metal},
 		{"Color", "Color3", Color3.fromRGB(163, 162, 165)},
@@ -231,6 +228,16 @@ return {
 		{"FocusDistance", "number", 0.05},
 		{"InFocusRadius", "number", 10},
 		{"NearIntensity", "number", 0.75}
+	},
+
+	Atmosphere = {
+		{"Name", "string", "Atmosphere"},
+		{"Density", "number", 0.395},
+		{"Offset", "number", 0},
+		{"Color", "Color3", 199, 170, 107},
+		{"Decay", "Color3", 92, 60, 13},
+		{"Glare", "number", 0},
+		{"Haze", "number", 0},
 	},
 	
 	SunRaysEffect = {
