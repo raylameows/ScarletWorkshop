@@ -170,7 +170,7 @@ function Read.Instance(node: Shared.Node, direct: boolean)
 	
 	for _, childNode in (node.Children) do
 		local child = Read.Instance(childNode)
-		if not child then continue end
+		if child == nil then continue end
 		child.Parent = object
 	end
 	

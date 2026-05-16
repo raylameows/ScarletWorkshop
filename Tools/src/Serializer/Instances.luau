@@ -140,7 +140,7 @@ return {
 	Configuration = {
 		{"Name", "string", "Configuration"}
 	},
-	
+
 	Fire = {
 		{"Color", "Color3", Color3.fromRGB(236, 139, 70)},
 		{"Enabled", "boolean", true},
@@ -150,7 +150,7 @@ return {
 		{"Size", "number", 5},
 		{"TimeScale", "number", 1}
 	},
-	
+
 	ParticleEmitter = {
 		{"Brightness", "number", 1},
 		{"Color", "ColorSequence", ColorSequence.new(Color3.new(1, 1, 1))},
@@ -180,7 +180,7 @@ return {
 		{"VelocityInheritance", "number", 0},
 		{"WindAffectsDrag", "boolean", 0},
 	},
-	
+
 	SpecialMesh = {
 		{"MeshId", "string", ""},
 		{"MeshType", "EnumItem", Enum.MeshType.Head},
@@ -189,7 +189,7 @@ return {
 		{"Scale", "Vector3", Vector3.new(1, 1, 1)},
 		{"VertexColor", "Vector3", Vector3.new(1, 1, 1)}
 	},
-	
+
 	Sky = {
 		{"CelestialBodiesShown", "boolean", true},
 		{"MoonAngularSize", "number", 11},
@@ -224,6 +224,16 @@ return {
 		{"Threshold", "number", 2}
 	},
 
+	Atmosphere = {
+		{"Name", "string", "Atmosphere"},
+		{"Density", "number", 0.395},
+		{"Offset", "number", 0},
+		{"Color", "Color3", Color3.fromRGB(199, 170, 107)},
+		{"Decay", "Color3", Color3.fromRGB(92, 60, 13)},
+		{"Glare", "number", 0},
+		{"Haze", "number", 0}
+	},
+
 	DepthOfFieldEffect = {
 		{"Name", "string", "DepthOfField"},
 		{"Enabled", "boolean", true},
@@ -232,34 +242,34 @@ return {
 		{"InFocusRadius", "number", 10},
 		{"NearIntensity", "number", 0.75}
 	},
-	
+
 	SunRaysEffect = {
 		{"Name", "string", "SunRaysEffect"},
 		{"Enabled", "boolean", true},
 		{"Intensity", "number", 0.25},
 		{"Spread", "number", 1}
 	},
-	
+
 	Attachment = {
 		{"Visible", "boolean", false},
 		{"Name", "string", "Attachment"},
 		{"CFrame", "CFrame", CFrame.new()},
 	},
-	
+
 	BoolValue = {
 		{"Name", "string", "Value"},
 		{"Value", "boolean", false}
 	},
-	
+
 	Vector3Value = {
 		{"Name", "string", "Value"},
 		{"Value", "Vector3", Vector3.new()}
 	},
-	
+
 	SurfaceGui = {
 		{"ZOffset", "number", 0},
 		{"Active", "boolean", true},
-		{"Adornee", "Instance", nil},
+		{"Adornee", "InstanceReference", nil},
 		{"Enabled", "boolean", true},
 		{"Face", "EnumItem", Enum.NormalId.Front},
 		{"LightInfluence", "number", 1},
@@ -273,7 +283,7 @@ return {
 		{"PixelsPerStud", "number", 50},
 		{"SizingMode", "EnumItem", Enum.SurfaceGuiSizingMode.PixelsPerStud}
 	},
-	
+
 	Sound = {
 		{"Name", "string", "Sound"},
 		{"PlayOnRemove", "boolean", false},
@@ -288,7 +298,7 @@ return {
 		{"TimePosition", "number", 0},
 		{"Volume", "number", 0.5}
 	},
-	
+
 	Beam = {
 		{"Color", "ColorSequence", ColorSequence.new(Color3.new(1, 1, 1))},
 		{"Enabled", "boolean", true},
@@ -326,7 +336,7 @@ return {
 		{"Enabled", "boolean", true},
 		{"Name", "string", "Weld"}
 	},
-	
+
 	Humanoid = {
 		{"AutoJumpEnabled", "boolean", true},
 		{"AutoRotate", "boolean", true},
@@ -349,7 +359,7 @@ return {
 		{"WalkSpeed", "number", 16},
 		{"Name", "string", "Humanoid"}
 	},
-	
+
 	Motor6D = {
 		{"C0", "CFrame", CFrame.new()},
 		{"C1", "CFrame", CFrame.new()},
@@ -371,7 +381,7 @@ return {
 		{"Enabled", "boolean", true},
 		{"Name", "string", "Snap"}
 	},
-	
+
 	Animator = {
 		{"PreferLodEnabled", "boolean", true},
 		{"Name", "string", "Animator"}
@@ -388,7 +398,7 @@ return {
 		{"PantsTemplate", "string", ""},
 		{"Name", "string", "Pants"}
 	},
-	
+
 	HingeConstraint = {
 		{"Color", "BrickColor", BrickColor.new()},
 		{"Radius", "number", 0.15},
@@ -400,7 +410,7 @@ return {
 		{"LimitsEnabled", "boolean", false},
 		{"Name", "string", "HingeConstraint"}
 	},
-	
+
 	Lighting = {
 		{"Ambient", "Color3", Color3.fromRGB(138, 138, 138)},
 		{"Brightness", "number", 2},

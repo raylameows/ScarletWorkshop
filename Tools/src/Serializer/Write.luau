@@ -173,7 +173,7 @@ function Write.Instance(object: Instance, direct: boolean): Shared.Node
 	
 	for _, child in (object:GetChildren()) do
 		local childNode = Write.Instance(child)
-		if not childNode then continue end
+		if childNode == nil then continue end
 		table.insert(node.Children, childNode)
 	end
 	
